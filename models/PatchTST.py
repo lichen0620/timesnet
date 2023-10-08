@@ -80,9 +80,9 @@ class Model(nn.Module):
         x_enc /= stdev
 
         # do patching and embedding
-        x_enc = x_enc.permute(0, 2, 1)
+        x_enc = x_enc.permute(0, 2, 1) #32 7 96
         # u: [bs * nvars x patch_num x d_model]
-        enc_out, n_vars = self.patch_embedding(x_enc)
+        enc_out, n_vars = self.patch_embedding(x_enc) #等价于将输入图像划分成N个大小为P^2C的patch块。224 12 512
 
         # Encoder
         # z: [bs * nvars x patch_num x d_model]
