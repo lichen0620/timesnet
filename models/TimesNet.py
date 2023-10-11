@@ -80,7 +80,7 @@ class Model(nn.Module):
         self.seq_len = configs.seq_len
         self.label_len = configs.label_len
         self.pred_len = configs.pred_len
-        self.model = nn.ModuleList([TimesBlock(configs)
+        self.model = nn.ModuleList([TimesBlock(configs) #因为是timesnet,所以model是timesblock
                                     for _ in range(configs.e_layers)])
         self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                            configs.dropout)
@@ -111,11 +111,12 @@ class Model(nn.Module):
         # embedding
         enc_out = self.enc_embedding(x_enc, x_mark_enc)  # [B,T,C]
         enc_out = self.predict_linear(enc_out.permute(0, 2, 1)).permute(
-            0, 2, 1)  # align temporal dimension
+            0, 2, 1)  # align temporal dimension对齐时间维度
         # TimesNet
         for i in range(self.layer):
+            aa = self.model[i](enc_out)
             enc_out = self.layer_norm(self.model[i](enc_out))
-        # porject back
+        # project back
         dec_out = self.projection(enc_out)
 
         # De-Normalization from Non-stationary Transformer

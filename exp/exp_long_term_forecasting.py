@@ -20,8 +20,8 @@ class Exp_Long_Term_Forecast(Exp_Basic):
     def _build_model(self):
         model = self.model_dict[self.args.model].Model(self.args).float()
 
-        if self.args.use_multi_gpu and self.args.use_gpu:
-            model = nn.DataParallel(model, device_ids=self.args.device_ids)
+        if self.args.use_gpu:
+            model = nn.DataParallel(model, device_ids=self.args.device_ids).cuda()
         return model
 
     def _get_data(self, flag):
@@ -78,7 +78,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
 
     def train(self, setting):
         train_data, train_loader = self._get_data(flag='train')
-        # vali_data, vali_loader = self._get_data(flag='train')
+        # vali_data, vali_loader = self._get_data(flag='val')
         # test_data, test_loader = self._get_data(flag='test')
 
         path = os.path.join(self.args.checkpoints, setting)
@@ -101,11 +101,6 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             train_loss = []
 
             self.model.train()
-            self.model = nn.DataParallel(self.model.cuda(), device_ids=[2,3], output_device=None)
-            # self.model = nn.DataParallel(self.model)
-            device = torch.device('cuda:0')
-            self.model.to(device)
-
             epoch_time = time.time()
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
                 iter_count += 1
@@ -119,7 +114,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 # decoder input
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-
+                
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
@@ -172,8 +167,6 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             # if early_stopping.early_stop:
             #     print("Early stopping")
             #     break
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} ".format(
-                epoch + 1, train_steps, train_loss))
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 

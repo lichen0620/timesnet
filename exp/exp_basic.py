@@ -24,7 +24,7 @@ class Exp_Basic(object):
             'Crossformer': Crossformer,
             'FiLM': FiLM,
         }
-        self.device = args.gpu
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu" )
         self.model = self._build_model().to(self.device)
 
     def _build_model(self):
